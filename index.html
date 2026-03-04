@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>tecnocareVoice v0.8</title>
+    <title>tecnocareVoice v0.86</title>
     <script src="https://accounts.google.com/gsi/client" onload="initTokenClient()" async defer></script>
     <style>
         body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; background: #2196F3; color: white; overflow: hidden; }
-        #app-info { position: fixed; top: 10px; right: 10px; color: rgba(255,255,255,0.4); font-size: 12px; cursor: pointer; z-index: 100; padding: 10px; }
+        /* 隠しボタンのz-indexを上げて確実に反応するようにします */
+        #app-info { position: fixed; top: 10px; right: 10px; color: rgba(255,255,255,0.4); font-size: 12px; cursor: pointer; z-index: 1000; padding: 10px; }
 
         /* 上半分：表示エリア */
         #upper-area { height: 50vh; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; position: relative; }
@@ -34,9 +35,9 @@
         .loading { background: #9e9e9e !important; }
 
         /* 設定モーダル */
-        #settings-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 1000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        #settings-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 10000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         .setting-group { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        input[type="text"], input[type="email"], select { width: 100%; font-size: 1.2rem; margin: 5px 0 10px; padding: 10px; box-sizing: border-box; }
+        input[type="text"], input[type="email"], select { width: 100%; font-size: 1.2rem; margin: 5px 0 10px; padding: 10px; box-sizing: border-box; color: black; }
         button.save-btn { width: 100%; padding: 20px; font-size: 1.5rem; font-weight: bold; background: #4CAF50; color: white; border: none; border-radius: 10px; margin-bottom: 50px;}
     </style>
 </head>
@@ -79,6 +80,7 @@
         </div>
         <div id="recipient-config-list"></div>
         <button class="save-btn" onclick="saveSettings()">設定を保存して閉じる</button>
+        <button onclick="document.getElementById('settings-modal').style.display='none'" style="width:100%; background:none; color:white; border:none; padding:10px;">キャンセル</button>
     </div>
 
     <script>
@@ -90,6 +92,7 @@
         let lastAnalysis = null;
         let thinkTimer = null;
         let thinkFrame = 1;
+        let tapCount = 0;
         let tokenClient;
         let accessToken = null;
 
@@ -126,12 +129,61 @@
             msgDisp.innerText = "準備完了！\nおはなし してください";
         }
 
-        // UI Control
-        function handleSecretTap() { /* 設定表示ロジックは維持 */ }
-        function openSettings() { /* 設定表示ロジックは維持 */ }
-        function renderRecipientConfig() { /* 宛先リスト表示は維持 */ }
-        function saveSettings() { /* 設定保存ロジックは維持 */ }
+        // --- ★UI Control（隠し設定画面のロジック）★ ---
+        function handleSecretTap() {
+            tapCount++;
+            if (tapCount >= 5) {
+                tapCount = 0;
+                openSettings();
+            }
+            setTimeout(() => { tapCount = 0; }, 3000); 
+        }
 
+        function openSettings() {
+            document.getElementById('from-name').value = config.fromName || "";
+            document.getElementById('output-mode').value = config.outputMode || "標準";
+            for (let i = 0; i < 5; i++) {
+                const r = config.recipients[i] || {name:"", email:"", context:"家族向け"};
+                document.getElementById(`to-name-${i}`).value = r.name || "";
+                document.getElementById(`to-email-${i}`).value = r.email || "";
+                document.getElementById(`context-${i}`).value = r.context || "家族向け";
+            }
+            document.getElementById('settings-modal').style.display = 'block';
+        }
+
+        function renderRecipientConfig() {
+            const list = document.getElementById('recipient-config-list');
+            list.innerHTML = "";
+            for(let i=0; i<5; i++){
+                list.innerHTML += `
+                <div class="setting-group">
+                    <h3>宛先 ${i+1}</h3>
+                    <label>名前</label><input type="text" id="to-name-${i}">
+                    <label>メール</label><input type="email" id="to-email-${i}">
+                    <label>文体</label>
+                    <select id="context-${i}">
+                        <option value="家族向け">家族向け</option>
+                        <option value="友人向け">友人向け</option>
+                        <option value="仕事/ST向け">仕事/ST向け</option>
+                    </select>
+                </div>`;
+            }
+        }
+
+        function saveSettings() {
+            config.fromName = document.getElementById('from-name').value;
+            config.outputMode = document.getElementById('output-mode').value;
+            config.recipients = [0,1,2,3,4].map(i => ({
+                name: document.getElementById(`to-name-${i}`).value,
+                email: document.getElementById(`to-email-${i}`).value,
+                context: document.getElementById(`context-${i}`).value
+            }));
+            localStorage.setItem('awesome_voice_config', JSON.stringify(config));
+            updateDrumDisplay();
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        // --- ロボットアニメーション ---
         function updateRobot(status) {
             if (thinkTimer) { clearInterval(thinkTimer); thinkTimer = null; }
             if (status === 'select') {
@@ -220,7 +272,7 @@
                 body: JSON.stringify({ 
                     version: "salvage", action: "send", 
                     analysis: lastAnalysis, row: lastAnalysis.row, 
-                    accessToken: accessToken, // 個人認証用
+                    accessToken: accessToken, 
                     settings: { fromName:config.fromName, toName:activeR.name, toEmail:activeR.email } 
                 }) 
             });
