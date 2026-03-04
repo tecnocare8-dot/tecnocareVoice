@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>tecnocareVoice v0.4</title>
+    <title>tecnocareVoice v0.5</title>
     <style>
         body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; background: #2196F3; color: white; overflow: hidden; }
         
@@ -16,6 +16,17 @@
         #drum-controls { display: flex; gap: 20px; width: 100%; justify-content: center; }
         .drum-btn { padding: 15px 40px; font-size: 1.5rem; font-weight: bold; background: white; color: #1976D2; border-radius: 50px; border: none; cursor: pointer; }
         .decide-btn { background: #FFEB3B; color: #333; }
+
+        /* ★執事ロボット表示エリア★ */
+        #robot-area { 
+            display: flex; flex: 1; align-items: center; justify-content: center; 
+            padding: 10px; min-height: 200px; 
+        }
+        #robot-image { 
+            width: 180px; height: auto; 
+            transition: transform 0.3s ease-in-out; 
+            transform: rotate(0deg); 
+        }
 
         /* 解析結果表示エリア（決定後に表示） */
         #display { display: none; flex: 1; padding: 20px; font-size: 2rem; align-items: center; justify-content: center; text-align: center; }
@@ -49,6 +60,10 @@
         </div>
     </div>
 
+    <div id="robot-area" style="display:none;">
+        <img id="robot-image" src="select.png">
+    </div>
+
     <div id="display"></div>
 
     <div id="control-area">
@@ -78,7 +93,6 @@
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyJrYYjRASyIBtq9vrVGc1RMtyyZaR7kiTU7YgT04ZmPQp7U1sYXE7dJxFJe8bZ9L0C_Q/exec";
         
-        // --- 初期値のテンプレート ---
         const DEFAULT_CONFIG = { 
             fromName:"", 
             fromEmail:"", 
@@ -89,24 +103,23 @@
         let currentDrumIdx = 0;
         let tapCount = 0;
 
-        // 設定ファイルの読み込み
+        // ★ロボットアニメーション用の変数★
+        let thinkTimer = null;
+        let thinkFrame = 1;
+        const robotImg = document.getElementById('robot-image');
+
         window.onload = () => {
             try {
                 const saved = localStorage.getItem('awesome_voice_config');
                 if (saved) {
                     const parsed = JSON.parse(saved);
-                    // 宛先リストが正しく配列かチェック
                     if (parsed && Array.isArray(parsed.recipients)) {
                         config = parsed;
                     } else {
                         throw new Error("Invalid format");
                     }
-                } else {
-                    // 初回起動時などのメッセージ
-                    console.log("No config found. Using default.");
                 }
             } catch (e) {
-                // 破損・不整合時のアラートと初期化
                 alert("設定ファイルが壊れています。再度設定してください。");
                 config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
             }
@@ -114,7 +127,6 @@
             updateDrumDisplay();
         };
 
-        // 5回タップで設定画面へ
         function handleSecretTap() {
             tapCount++;
             if (tapCount >= 5) {
@@ -128,7 +140,6 @@
             document.getElementById('from-name').value = config.fromName || "";
             document.getElementById('from-email').value = config.fromEmail || "";
             document.getElementById('output-mode').value = config.outputMode || "標準";
-            
             for (let i = 0; i < 5; i++) {
                 const r = config.recipients[i] || {name:"", email:"", context:"家族向け"};
                 document.getElementById(`to-name-${i}`).value = r.name || "";
@@ -179,11 +190,7 @@
         function updateDrumDisplay() {
             const drum = document.getElementById('drum-display');
             if (!drum) return;
-
-            const r = (config.recipients && config.recipients[currentDrumIdx]) 
-                      ? config.recipients[currentDrumIdx] 
-                      : { name: "(未設定)" };
-
+            const r = (config.recipients && config.recipients[currentDrumIdx]) ? config.recipients[currentDrumIdx] : { name: "(未設定)" };
             const name = r.name || "(未登録)";
             drum.style.opacity = 0;
             setTimeout(() => {
@@ -192,17 +199,34 @@
             }, 100);
         }
 
-        function decideRecipient() {
-            document.getElementById('selector-area').style.display = 'none';
-            document.getElementById('display').style.display = 'flex';
-            const currentName = (config.recipients[currentDrumIdx] && config.recipients[currentDrumIdx].name) 
-                                ? config.recipients[currentDrumIdx].name 
-                                : "(未設定)";
-            document.getElementById('display').innerText = `${currentName} さんへお話しください`;
-            document.getElementById('control-area').style.display = 'flex';
+        // ★ロボットの状態変更関数★
+        function updateRobot(status) {
+            if (thinkTimer) { clearInterval(thinkTimer); thinkTimer = null; }
+            if (status === 'select') {
+                robotImg.src = 'select.png'; robotImg.style.transform = 'rotate(0deg)';
+            } else if (status === 'thinking') {
+                thinkFrame = 1;
+                thinkTimer = setInterval(() => {
+                    thinkFrame = (thinkFrame % 3) + 1;
+                    robotImg.src = `thinking${thinkFrame}.png`;
+                    const angles = [-5, 0, 5];
+                    robotImg.style.transform = `rotate(${angles[thinkFrame-1]}deg)`;
+                }, 1000);
+            } else if (status === 'decide') {
+                robotImg.src = 'decide.png'; robotImg.style.transform = 'rotate(0deg)';
+            }
         }
 
-        /* 録音・通信ロジック */
+        function decideRecipient() {
+            document.getElementById('selector-area').style.display = 'none';
+            document.getElementById('robot-area').style.display = 'flex';
+            document.getElementById('display').style.display = 'flex';
+            const currentName = (config.recipients[currentDrumIdx] && config.recipients[currentDrumIdx].name) ? config.recipients[currentDrumIdx].name : "(未設定)";
+            document.getElementById('display').innerText = `${currentName} さんへお話しください`;
+            document.getElementById('control-area').style.display = 'flex';
+            updateRobot('select'); // 最初は指差し
+        }
+
         let mediaRecorder, audioChunks = [], lastAnalysis = null;
         const micBtn = document.getElementById('mic-btn');
 
@@ -218,6 +242,7 @@
             } else {
                 mediaRecorder.stop();
                 micBtn.innerText = "解析中..."; micBtn.classList.add('loading');
+                updateRobot('thinking'); // ★考えてるアニメ開始★
             }
         };
 
@@ -230,16 +255,17 @@
                 const res = await fetch(GAS_URL, { 
                     method: 'POST', 
                     body: JSON.stringify({ 
-                        version: "salvage",action: "analyze", audio: base64, email: config.fromEmail,
+                        version: "salvage", action: "analyze", audio: base64, email: config.fromEmail,
                         toWho: activeR.name, context: activeR.context, outputMode: config.outputMode 
                     }) 
                 });
                 const json = await res.json();
                 if (json.status === "success") {
                     lastAnalysis = json.analysis;
-                    lastAnalysis.row = json.row;
+                    lastAnalysis.row = json.row; // 行番号を確実に保存
                     document.getElementById('display').innerText = lastAnalysis.inference;
                     micBtn.style.display = "none"; document.getElementById('confirm-row').style.display = "flex";
+                    updateRobot('decide'); // ★わかったポーズ★
                 }
             } catch (err) { alert("エラー: " + err); resetUI(); }
         }
@@ -249,7 +275,18 @@
             document.getElementById('display').innerText = "送信中...";
             document.getElementById('confirm-row').style.display = "none";
             const settings = { fromName:config.fromName, fromEmail:config.fromEmail, toName:activeR.name, toEmail:activeR.email };
-            await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "send", analysis: lastAnalysis, row: lastAnalysis.row, settings: settings }) });
+            
+            // ★rowを明確に第一階層に含めて送信★
+            await fetch(GAS_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    version: "salvage",
+                    action: "send", 
+                    analysis: lastAnalysis, 
+                    row: lastAnalysis.row, 
+                    settings: settings 
+                }) 
+            });
             alert("送信しました"); resetUI();
         };
 
@@ -257,10 +294,12 @@
 
         function resetUI() {
             document.getElementById('selector-area').style.display = 'flex';
+            document.getElementById('robot-area').style.display = 'none';
             document.getElementById('display').style.display = 'none';
             document.getElementById('control-area').style.display = 'none';
             micBtn.style.display = "flex"; micBtn.innerText = "録音する"; micBtn.style.background = "#f44336";
             micBtn.classList.remove('loading');
+            updateRobot('select');
             updateDrumDisplay();
         }
     </script>
