@@ -3,18 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AwesomeVoice v0.4 (Salvage)</title>
+    <title>tecnocareVoice v0.4</title>
     <style>
-        /* 既存のスタイルを継承しつつ拡張 */
         body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; background: #2196F3; color: white; overflow: hidden; }
-        #app-info { position: fixed; top: 10px; right: 10px; color: rgba(255,255,255,0.4); font-size: 12px; cursor: pointer; z-index: 100; }
         
-        /* 宛先クイック選択（ドラム式） */
-        #recipient-selector { background: #1976D2; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); }
-        #target-select { font-size: 1.2rem; padding: 5px 10px; border-radius: 5px; border: none; background: white; color: #333; }
+        /* 右上の隠し設定ボタン */
+        #app-info { position: fixed; top: 10px; right: 10px; color: rgba(255,255,255,0.4); font-size: 12px; cursor: pointer; user-select: none; z-index: 100; padding: 10px; }
+        
+        /* 1. 録音前のドラム式宛先選択エリア（画面上半分） */
+        #selector-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1976D2; }
+        #drum-display { font-size: 3rem; font-weight: bold; margin-bottom: 20px; transition: all 0.2s; height: 4rem; display: flex; align-items: center; }
+        #drum-controls { display: flex; gap: 20px; width: 100%; justify-content: center; }
+        .drum-btn { padding: 15px 40px; font-size: 1.5rem; font-weight: bold; background: white; color: #1976D2; border-radius: 50px; border: none; cursor: pointer; }
+        .decide-btn { background: #FFEB3B; color: #333; }
 
-        #display { flex: 1; padding: 20px; font-size: 1.8rem; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        #control-area { height: 35vh; display: flex; flex-direction: column; border-top: 4px solid white; }
+        /* 解析結果表示エリア（決定後に表示） */
+        #display { display: none; flex: 1; padding: 20px; font-size: 2rem; align-items: center; justify-content: center; text-align: center; }
+
+        /* コントロールエリア（画面下40%） */
+        #control-area { height: 40vh; display: none; flex-direction: column; border-top: 4px solid white; }
         .full-btn { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; cursor: pointer; text-align: center; }
         #confirm-row { flex: 1; display: none; }
         .half-btn { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; cursor: pointer; border-right: 2px solid white; }
@@ -24,30 +31,25 @@
         #retry-btn { background: #757575; border-right: none; }
         .loading { background: #9e9e9e !important; cursor: wait; }
 
-        /* 設定モーダル（5件登録用） */
+        /* 設定モーダル */
         #settings-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 1000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        .setting-group { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.2); }
-        .setting-group h3 { margin-top: 0; color: #FFEB3B; }
-        input[type="text"], input[type="email"], select { width: 100%; font-size: 1.1rem; margin: 5px 0 10px; padding: 8px; box-sizing: border-box; }
-        .mode-select { display: flex; gap: 20px; margin: 10px 0; }
-        button.save-btn { width: 100%; padding: 15px; font-size: 1.3rem; font-weight: bold; cursor: pointer; border-radius: 5px; border:none; background: #4CAF50; color: white; margin-bottom: 40px;}
+        .setting-group { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        input[type="text"], input[type="email"], select { width: 100%; font-size: 1.2rem; margin: 5px 0 10px; padding: 10px; box-sizing: border-box; }
+        button.save-btn { width: 100%; padding: 20px; font-size: 1.5rem; font-weight: bold; background: #4CAF50; color: white; border: none; border-radius: 10px; margin-bottom: 50px;}
     </style>
 </head>
 <body>
-    <div id="app-info">AwesomeVoice v0.4 Setting</div>
+    <div id="app-info" onclick="handleSecretTap()">tecnocareVoice</div>
 
-    <div id="recipient-selector">
-        <span>送る相手:</span>
-        <select id="target-select">
-            <option value="0">1: (未登録)</option>
-            <option value="1">2: (未登録)</option>
-            <option value="2">3: (未登録)</option>
-            <option value="3">4: (未登録)</option>
-            <option value="4">5: (未登録)</option>
-        </select>
+    <div id="selector-area">
+        <div id="drum-display">1: 読み込み中...</div>
+        <div id="drum-controls">
+            <button class="drum-btn" onclick="nextRecipient()">次へ</button>
+            <button class="drum-btn decide-btn" onclick="decideRecipient()">決定</button>
+        </div>
     </div>
 
-    <div id="display">画面下の「録音する」を叩いて<br>お話しください</div>
+    <div id="display"></div>
 
     <div id="control-area">
         <div id="mic-btn" class="full-btn">録音する</div>
@@ -58,191 +60,174 @@
     </div>
 
     <div id="settings-modal">
-        <h2>アプリ設定</h2>
-        
+        <h2 style="color:#FFEB3B">設定 (5回タップ)</h2>
         <div class="setting-group">
-            <h3>共通設定</h3>
-            <label>あなたの名前</label><input type="text" id="from-name">
-            <label>あなたのメール</label><input type="email" id="from-email">
-            <label>表示モード</label>
-            <div class="mode-select">
-                <label><input type="radio" name="outputMode" value="標準" checked> 標準</label>
-                <label><input type="radio" name="outputMode" value="ひらがな分かち書き"> 分かち書き</label>
-            </div>
+            <label>自分の名前</label><input type="text" id="from-name">
+            <label>自分のメール</label><input type="email" id="from-email">
+            <label>表記モード</label>
+            <select id="output-mode">
+                <option value="標準">標準（漢字あり）</option>
+                <option value="ひらがな分かち書き">ひらがな分かち書き</option>
+            </select>
         </div>
-
-        <div id="recipient-forms">
-            </div>
-
+        <div id="recipient-config-list"></div>
         <button class="save-btn" onclick="saveSettings()">設定を保存して閉じる</button>
+        <button onclick="document.getElementById('settings-modal').style.display='none'" style="width:100%; background:none; color:white; border:none; padding:10px;">キャンセル</button>
     </div>
 
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyGraAOg3D5JFCP8Mb7TKf_MkwmM71rl0mOjj_PkVzRGMLJMl_Qln-fx3nmOVnhMPoqhQ/exec";
-        const MAX_TIME = 45; const SILENCE_TIME = 5; const SILENCE_THRESHOLD = 0.01;
-        let mediaRecorder, audioChunks = [], lastAnalysis = null, audioContext, analyser, dataArray, silenceTimer, recordingTimer;
-        
-        const micBtn = document.getElementById('mic-btn'), confirmRow = document.getElementById('confirm-row'), display = document.getElementById('display'), targetSelect = document.getElementById('target-select');
+        let config = { fromName:"", fromEmail:"", outputMode:"標準", recipients:Array(5).fill({name:"", email:"", context:"家族向け"}) };
+        let currentDrumIdx = 0;
+        let tapCount = 0;
 
-        // ページ読み込み時に宛先リストを更新
-        window.onload = () => { loadSettings(); updateTargetSelector(); };
+        // 設定ファイルの読み込み（保存名を変えない）
+        window.onload = () => {
+            const saved = localStorage.getItem('awesome_voice_config');
+            if (saved) config = JSON.parse(saved);
+            renderRecipientConfig();
+            updateDrumDisplay();
+        };
 
-        // 宛先5件のフォームを生成
-        const recipientForms = document.getElementById('recipient-forms');
-        for(let i=0; i<5; i++) {
-            recipientForms.innerHTML += `
-                <div class="setting-group">
-                    <h3>宛先 ${i+1}</h3>
-                    <label>相手の名前</label><input type="text" id="to-name-${i}">
-                    <label>メールアドレス</label><input type="email" id="to-email-${i}">
-                    <label>文体</label>
-                    <select id="context-${i}">
-                        <option value="家族向け">家族向け（温かい）</option>
-                        <option value="友人向け">友人向け（親しい）</option>
-                        <option value="仕事/ST向け">仕事/ST向け（丁寧）</option>
-                    </select>
-                </div>
-            `;
-        }
-
-        document.getElementById('app-info').onclick = () => { document.getElementById('settings-modal').style.display = 'block'; };
-
-        function saveSettings() {
-            const recipients = [];
-            for(let i=0; i<5; i++) {
-                recipients.push({
-                    name: document.getElementById(`to-name-${i}`).value,
-                    email: document.getElementById(`to-email-${i}`).value,
-                    context: document.getElementById(`context-${i}`).value
-                });
+        // 5回タップで設定を開く
+        function handleSecretTap() {
+            tapCount++;
+            if (tapCount >= 5) {
+                tapCount = 0;
+                openSettings();
             }
-            const config = {
-                fromName: document.getElementById('from-name').value,
-                fromEmail: document.getElementById('from-email').value,
-                outputMode: document.querySelector('input[name="outputMode"]:checked').value,
-                recipients: recipients
-            };
-            localStorage.setItem('awesome_voice_v4_config', JSON.stringify(config));
-            updateTargetSelector();
-            document.getElementById('settings-modal').style.display = 'none';
+            setTimeout(() => { tapCount = 0; }, 3000); // 3秒以内に5回
         }
 
-        function loadSettings() {
-            const saved = localStorage.getItem('awesome_voice_v4_config');
-            if (!saved) return;
-            const c = JSON.parse(saved);
-            document.getElementById('from-name').value = c.fromName || "";
-            document.getElementById('from-email').value = c.fromEmail || "";
-            if(c.outputMode) document.querySelector(`input[name="outputMode"][value="${c.outputMode}"]`).checked = true;
-            
-            c.recipients.forEach((r, i) => {
+        function openSettings() {
+            document.getElementById('from-name').value = config.fromName || "";
+            document.getElementById('from-email').value = config.fromEmail || "";
+            document.getElementById('output-mode').value = config.outputMode || "標準";
+            config.recipients.forEach((r, i) => {
                 document.getElementById(`to-name-${i}`).value = r.name || "";
                 document.getElementById(`to-email-${i}`).value = r.email || "";
                 document.getElementById(`context-${i}`).value = r.context || "家族向け";
             });
+            document.getElementById('settings-modal').style.display = 'block';
         }
 
-        function updateTargetSelector() {
-            const saved = localStorage.getItem('awesome_voice_v4_config');
-            if (!saved) return;
-            const c = JSON.parse(saved);
-            targetSelect.innerHTML = "";
-            c.recipients.forEach((r, i) => {
-                const label = r.name ? `${i+1}: ${r.name}` : `${i+1}: (未登録)`;
-                const opt = new Option(label, i);
-                targetSelect.add(opt);
-            });
+        function renderRecipientConfig() {
+            const list = document.getElementById('recipient-config-list');
+            list.innerHTML = "";
+            for(let i=0; i<5; i++){
+                list.innerHTML += `
+                <div class="setting-group">
+                    <h3>宛先 ${i+1}</h3>
+                    <label>名前</label><input type="text" id="to-name-${i}">
+                    <label>メール</label><input type="email" id="to-email-${i}">
+                    <label>文体</label>
+                    <select id="context-${i}">
+                        <option value="家族向け">家族向け</option>
+                        <option value="友人向け">友人向け</option>
+                        <option value="仕事/ST向け">仕事/ST向け</option>
+                    </select>
+                </div>`;
+            }
         }
 
-        /* 録音・解析ロジック（GASの新しいパラメータに対応） */
-        micBtn.onclick = () => { if (!mediaRecorder || mediaRecorder.state === "inactive") startRecording(); else stopRecording(); };
-
-        async function startRecording() {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            audioContext = new AudioContext();
-            const source = audioContext.createMediaStreamSource(stream);
-            analyser = audioContext.createAnalyser();
-            source.connect(analyser);
-            dataArray = new Float32Array(analyser.fftSize);
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-            mediaRecorder.onstop = handleRecordingStop;
-            mediaRecorder.start();
-            micBtn.style.background = "#ffeb3b"; micBtn.innerText = "終わったら叩く";
-            detectSilence();
+        function saveSettings() {
+            config.fromName = document.getElementById('from-name').value;
+            config.fromEmail = document.getElementById('from-email').value;
+            config.outputMode = document.getElementById('output-mode').value;
+            config.recipients = config.recipients.map((_, i) => ({
+                name: document.getElementById(`to-name-${i}`).value,
+                email: document.getElementById(`to-email-${i}`).value,
+                context: document.getElementById(`context-${i}`).value
+            }));
+            localStorage.setItem('awesome_voice_config', JSON.stringify(config));
+            updateDrumDisplay();
+            document.getElementById('settings-modal').style.display = 'none';
         }
 
-        function detectSilence() {
-            if (!mediaRecorder || mediaRecorder.state !== "recording") return;
-            analyser.getFloatTimeDomainData(dataArray);
-            let peak = 0;
-            for (let i = 0; i < dataArray.length; i++) if (Math.abs(dataArray[i]) > peak) peak = Math.abs(dataArray[i]);
-            if (peak < SILENCE_THRESHOLD) { if (!silenceTimer) silenceTimer = setTimeout(() => stopRecording(), SILENCE_TIME * 1000); }
-            else { clearTimeout(silenceTimer); silenceTimer = null; }
-            requestAnimationFrame(detectSilence);
+        // ドラムロールの制御
+        function nextRecipient() {
+            currentDrumIdx = (currentDrumIdx + 1) % 5;
+            updateDrumDisplay();
         }
 
-        function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state === "recording") {
+        function updateDrumDisplay() {
+            const r = config.recipients[currentDrumIdx];
+            const name = r.name || "(未登録)";
+            const drum = document.getElementById('drum-display');
+            drum.style.opacity = 0;
+            setTimeout(() => {
+                drum.innerText = `${currentDrumIdx + 1}: ${name}`;
+                drum.style.opacity = 1;
+            }, 100);
+        }
+
+        function decideRecipient() {
+            document.getElementById('selector-area').style.display = 'none';
+            document.getElementById('display').style.display = 'flex';
+            document.getElementById('display').innerText = `${config.recipients[currentDrumIdx].name} さんへお話しください`;
+            document.getElementById('control-area').style.display = 'flex';
+        }
+
+        /* 録音・通信ロジック（v0.3を継承） */
+        let mediaRecorder, audioChunks = [], lastAnalysis = null;
+        const micBtn = document.getElementById('mic-btn');
+
+        micBtn.onclick = async () => {
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = handleRecordingStop;
+                mediaRecorder.start();
+                micBtn.style.background = "#ffeb3b"; micBtn.innerText = "終わったら叩く";
+            } else {
                 mediaRecorder.stop();
                 micBtn.innerText = "解析中..."; micBtn.classList.add('loading');
             }
-        }
+        };
 
         async function handleRecordingStop() {
             const blob = new Blob(audioChunks, { type: 'audio/webm' });
             const base64 = await new Promise(r => { const reader = new FileReader(); reader.onloadend = () => r(reader.result.split(',')[1]); reader.readAsDataURL(blob); });
+            const activeR = config.recipients[currentDrumIdx];
             
-            const config = JSON.parse(localStorage.getItem('awesome_voice_v4_config') || "{}");
-            const activeRecipient = config.recipients[targetSelect.value];
-
             try {
-                // GASへ「メアド」「宛先名」「文体」「表示モード」を全て送信
                 const res = await fetch(GAS_URL, { 
                     method: 'POST', 
                     body: JSON.stringify({ 
-                        action: "analyze", 
-                        audio: base64, 
-                        email: config.fromEmail,
-                        toWho: activeRecipient.name,
-                        context: activeRecipient.context,
-                        outputMode: config.outputMode
+                        action: "analyze", audio: base64, email: config.fromEmail,
+                        toWho: activeR.name, context: activeR.context, outputMode: config.outputMode 
                     }) 
                 });
                 const json = await res.json();
                 if (json.status === "success") {
                     lastAnalysis = json.analysis;
                     lastAnalysis.row = json.row;
-                    display.innerText = lastAnalysis.inference;
-                    micBtn.style.display = "none"; confirmRow.style.display = "flex";
+                    document.getElementById('display').innerText = lastAnalysis.inference;
+                    micBtn.style.display = "none"; document.getElementById('confirm-row').style.display = "flex";
                 }
-            } catch (err) { display.innerText = "エラー: " + err.message; setTimeout(resetUI, 3000); }
+            } catch (err) { alert("エラー: " + err); resetUI(); }
         }
 
         document.getElementById('send-btn').onclick = async () => {
-            const config = JSON.parse(localStorage.getItem('awesome_voice_v4_config') || "{}");
-            const activeRecipient = config.recipients[targetSelect.value];
-            display.innerText = "送信中..."; confirmRow.style.display = "none";
-            
-            // 送信用セッティングを動的に構成
-            const sendSettings = {
-                fromName: config.fromName,
-                fromEmail: config.fromEmail,
-                toName: activeRecipient.name,
-                toEmail: activeRecipient.email
-            };
-
-            await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "send", analysis: lastAnalysis, row: lastAnalysis.row, settings: sendSettings }) });
+            const activeR = config.recipients[currentDrumIdx];
+            document.getElementById('display').innerText = "送信中...";
+            document.getElementById('confirm-row').style.display = "none";
+            const settings = { fromName:config.fromName, fromEmail:config.fromEmail, toName:activeR.name, toEmail:activeR.email };
+            await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "send", analysis: lastAnalysis, row: lastAnalysis.row, settings: settings }) });
             alert("送信しました"); resetUI();
         };
 
-        document.getElementById('retry-btn').onclick = () => { resetUI(); };
+        document.getElementById('retry-btn').onclick = () => resetUI();
 
         function resetUI() {
-            micBtn.style.display = "flex"; confirmRow.style.display = "none";
-            micBtn.innerText = "録音する"; micBtn.style.background = "#f44336";
-            micBtn.classList.remove('loading'); display.innerText = "画面を叩いてお話しください";
+            document.getElementById('selector-area').style.display = 'flex';
+            document.getElementById('display').style.display = 'none';
+            document.getElementById('control-area').style.display = 'none';
+            micBtn.style.display = "flex"; micBtn.innerText = "録音する"; micBtn.style.background = "#f44336";
+            micBtn.classList.remove('loading');
+            updateDrumDisplay();
         }
     </script>
 </body>
