@@ -7,7 +7,6 @@
     <script src="https://accounts.google.com/gsi/client" onload="initTokenClient()" async defer></script>
     <style>
         body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; background: #2196F3; color: white; overflow: hidden; }
-        /* 隠しボタンのz-indexを上げて確実に反応するようにします */
         #app-info { position: fixed; top: 10px; right: 10px; color: rgba(255,255,255,0.4); font-size: 12px; cursor: pointer; z-index: 1000; padding: 10px; }
 
         /* 上半分：表示エリア */
@@ -95,6 +94,7 @@
         let tapCount = 0;
         let tokenClient;
         let accessToken = null;
+        let userEmail = null; // ★ユーザーのアドレスを保持する変数を追加
 
         const robotImg = document.getElementById('robot-image');
         const targetDisp = document.getElementById('target-display');
@@ -111,11 +111,19 @@
         function initTokenClient() {
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
-                scope: 'https://www.googleapis.com/auth/gmail.send',
+                scope: 'https://www.googleapis.com/auth/gmail.send email', // ★emailスコープを追加
                 callback: (response) => {
                     if (response.access_token) {
                         accessToken = response.access_token;
-                        showMicArea();
+                        // ★アクセストークンからメールアドレスを取得する処理
+                        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                            headers: { Authorization: `Bearer ${accessToken}` }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            userEmail = data.email;
+                            showMicArea();
+                        });
                     }
                 },
             });
@@ -129,7 +137,6 @@
             msgDisp.innerText = "準備完了！\nおはなし してください";
         }
 
-        // --- ★UI Control（隠し設定画面のロジック）★ ---
         function handleSecretTap() {
             tapCount++;
             if (tapCount >= 5) {
@@ -183,7 +190,6 @@
             document.getElementById('settings-modal').style.display = 'none';
         }
 
-        // --- ロボットアニメーション ---
         function updateRobot(status) {
             if (thinkTimer) { clearInterval(thinkTimer); thinkTimer = null; }
             if (status === 'select') {
@@ -249,6 +255,7 @@
                 method: 'POST', 
                 body: JSON.stringify({ 
                     version: "salvage", action: "analyze", audio: base64, 
+                    email: userEmail, // ★ここ！取得したメールアドレスを送信
                     toWho: activeR.name, context: activeR.context, outputMode: config.outputMode 
                 }) 
             });
