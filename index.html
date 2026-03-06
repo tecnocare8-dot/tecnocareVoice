@@ -103,6 +103,11 @@
         window.onload = () => {
             const saved = localStorage.getItem('awesome_voice_config');
             if (saved) config = JSON.parse(saved);
+            
+            // ★ログイン状態の復元
+            accessToken = localStorage.getItem('awesome_access_token');
+            userEmail = localStorage.getItem('awesome_user_email');
+            
             renderRecipientConfig();
             updateDrumDisplay();
         };
@@ -114,12 +119,17 @@
                 callback: (response) => {
                     if (response.access_token) {
                         accessToken = response.access_token;
+                        // ★ストレージに保存
+                        localStorage.setItem('awesome_access_token', accessToken);
+                        
                         fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                             headers: { Authorization: `Bearer ${accessToken}` }
                         })
                         .then(res => res.json())
                         .then(data => {
                             userEmail = data.email;
+                            // ★ストレージに保存
+                            localStorage.setItem('awesome_user_email', userEmail);
                             showMicArea();
                         });
                     }
@@ -218,8 +228,9 @@
             targetDisp.innerText = `${r.name || "(未設定)"} さんへ`;
             document.getElementById('selector-area').style.display = 'none';
             
-            // ★修正：マイクエリアを即時表示し、accessToken（ログイン状態）で判定
             showMicArea();
+            
+            // ★accessTokenがあるなら「お試し」とは言わない
             if (!accessToken) {
                 msgDisp.innerText = "お試しモードです\n(送信にはログインが必要)";
             } else {
