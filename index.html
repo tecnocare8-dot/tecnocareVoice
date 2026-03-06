@@ -94,7 +94,7 @@
         let tapCount = 0;
         let tokenClient;
         let accessToken = null;
-        let userEmail = null; // ★ユーザーのアドレスを保持する変数を追加
+        let userEmail = null; 
 
         const robotImg = document.getElementById('robot-image');
         const targetDisp = document.getElementById('target-display');
@@ -107,15 +107,13 @@
             updateDrumDisplay();
         };
 
-        // Google Auth
         function initTokenClient() {
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
-                scope: 'https://www.googleapis.com/auth/gmail.send email', // ★emailスコープを追加
+                scope: 'https://www.googleapis.com/auth/gmail.send email',
                 callback: (response) => {
                     if (response.access_token) {
                         accessToken = response.access_token;
-                        // ★アクセストークンからメールアドレスを取得する処理
                         fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                             headers: { Authorization: `Bearer ${accessToken}` }
                         })
@@ -219,10 +217,13 @@
             const r = config.recipients[currentDrumIdx] || {name: "(未設定)"};
             targetDisp.innerText = `${r.name || "(未設定)"} さんへ`;
             document.getElementById('selector-area').style.display = 'none';
-            // ★ログインしていなくても録音・解析には進めるように調整
+            
+            // ★修正：マイクエリアを即時表示し、accessToken（ログイン状態）で判定
             showMicArea();
-            if (!userEmail) {
+            if (!accessToken) {
                 msgDisp.innerText = "お試しモードです\n(送信にはログインが必要)";
+            } else {
+                msgDisp.innerText = "準備完了！\nおはなし してください";
             }
         }
 
@@ -250,7 +251,6 @@
             const base64 = await new Promise(r => { const reader = new FileReader(); reader.onloadend = () => r(reader.result.split(',')[1]); reader.readAsDataURL(blob); });
             const activeR = config.recipients[currentDrumIdx];
             
-            // ★重要：解析フェーズで userEmail を確実にGASへ飛ばす
             const res = await fetch(GAS_URL, { 
                 method: 'POST', 
                 body: JSON.stringify({ 
@@ -267,8 +267,7 @@
                 document.getElementById('mic-btn').style.display = 'none';
                 document.getElementById('confirm-area').style.display = 'flex';
                 
-                // ★棲み分け：ログイン済みなら「送信」表示。未ログインなら「送信」を隠しログインを促す
-                if (userEmail) {
+                if (accessToken) {
                     document.getElementById('send-btn').style.display = 'flex';
                 } else {
                     document.getElementById('send-btn').style.display = 'none';
