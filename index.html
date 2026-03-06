@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>tecnocareVoice v0.91</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+    </script>
     <script src="https://accounts.google.com/gsi/client" onload="initTokenClient()" async defer></script>
     <style>
         body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; background: #2196F3; color: white; overflow: hidden; }
@@ -189,7 +196,6 @@
             targetDisp.innerText = `${r.name || "(未設定)"} さんへ`;
             document.getElementById('selector-area').style.display = 'none';
             
-            // ★重要：表示バグ防止のため、ここでマイクボタンの状態をリセット
             const micBtn = document.getElementById('mic-btn');
             micBtn.innerText = "録音する";
             micBtn.style.background = "#f44336";
@@ -302,22 +308,19 @@
             if (thinkTimer) { clearInterval(thinkTimer); thinkTimer = null; }
             if (status === 'select') { robotImg.src = 'select.png'; robotImg.style.transform = 'rotate(0deg)'; } 
             else if (status === 'thinking') { thinkTimer = setInterval(() => { thinkFrame = (thinkFrame % 3) + 1; robotImg.src = `thinking${thinkFrame}.png`; robotImg.style.transform = `rotate(${[-5, 0, 5][thinkFrame-1]}deg)`; }, 1000); }
-            else if (status === 'decide'); { robotImg.src = 'decide.png'; robotImg.style.transform = 'rotate(0deg)'; }
+            else if (status === 'decide') { robotImg.src = 'decide.png'; robotImg.style.transform = 'rotate(0deg)'; }
         }
         
         function retry() { 
             lastAnalysis = null; 
             targetDisp.innerText = ""; 
             document.getElementById('selector-area').style.display = 'flex'; 
-            
-            // ★重要：ここで録音ボタンの表示を完全にリセット
             const micBtn = document.getElementById('mic-btn');
             micBtn.style.display = 'none'; 
             micBtn.innerText = "録音する";
             micBtn.style.background = "#f44336";
             micBtn.style.color = "white";
             micBtn.classList.remove('loading');
-            
             document.getElementById('confirm-area').style.display = 'none'; 
             updateDrumDisplay(); 
         }
