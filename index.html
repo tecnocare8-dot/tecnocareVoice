@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>tecnocareVoice v0.90</title>
+    <title>tecnocareVoice v0.91</title>
     <script src="https://accounts.google.com/gsi/client" onload="initTokenClient()" async defer></script>
     <style>
         body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; background: #2196F3; color: white; overflow: hidden; }
         #app-info { position: fixed; top: 10px; right: 10px; color: rgba(255,255,255,0.4); font-size: 12px; cursor: pointer; z-index: 1000; padding: 10px; }
 
-        /* 【新設】ウェルカム画面：ボタンを大きく、わかりやすく */
+        /* ウェルカム画面 */
         #welcome-screen { position: fixed; top:0; left:0; width:100%; height:100%; background: #2196F3; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; text-align: center; }
         .welcome-msg { font-size: 1.4rem; font-weight: bold; margin: 25px 0; line-height: 1.6; }
         .big-btn { width: 100%; max-width: 400px; padding: 25px; font-size: 1.5rem; font-weight: bold; border-radius: 15px; border: none; margin: 12px 0; cursor: pointer; transition: opacity 0.3s; }
@@ -18,7 +18,7 @@
         #btn-guest { background: rgba(255,255,255,0.2); color: white; border: 2px solid white; }
         #check-msg { margin-top: 15px; color: #FFEB3B; font-weight: bold; min-height: 1.5rem; }
 
-        /* メイン画面：既存デザインを維持 */
+        /* メイン画面 */
         #main-app { display: none; flex-direction: column; height: 100vh; }
         #upper-area { height: 50vh; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; position: relative; }
         #target-display { font-size: 1.8rem; font-weight: bold; text-align: left; margin-bottom: 10px; min-height: 2.2rem; }
@@ -38,9 +38,9 @@
         .split-btn { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; cursor: pointer; }
         #send-btn { background: #4CAF50; border-right: 2px solid white; }
         #retry-btn { background: #757575; }
-        .loading { background: #9e9e9e !important; }
+        .loading { background: #FFEB3B !important; color: #333 !important; }
 
-        /* 設定モーダル：ログアウトボタンを追加 */
+        /* 設定モーダル */
         #settings-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 10000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         .setting-group { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px; }
         input[type="text"], input[type="email"], select { width: 100%; font-size: 1.2rem; margin: 5px 0 10px; padding: 10px; box-sizing: border-box; color: black; }
@@ -116,13 +116,12 @@
             if (saved) config = JSON.parse(saved);
             renderRecipientConfig();
             
-            // 起動時のサイレント再連携試行
             authTimeout = setTimeout(() => {
                 if (!accessToken) {
                     setWelcomeButtonsEnabled(true);
                     document.getElementById('check-msg').innerText = "連携をタップしてください";
                 }
-            }, 8000); // 8秒応答がなければお試し誘導への準備
+            }, 8000);
         };
 
         function initTokenClient() {
@@ -131,24 +130,17 @@
                 callback: (response) => {
                     if (authTimeout) clearTimeout(authTimeout);
                     if (response.access_token) {
-                        // アカウント切り替えに対応するため、一度フラッシュしてからセット
                         accessToken = null; userEmail = null;
                         accessToken = response.access_token;
-                        
                         fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } })
                         .then(res => res.json()).then(data => {
                             userEmail = data.email;
                             isGuestMode = false;
                             enterApp();
-                        }).catch(() => {
-                            startGuestMode(); // 通信エラー時はお試しへ
-                        });
-                    } else {
-                        startGuestMode(); // キャンセル時などもお試しへ
-                    }
+                        }).catch(() => { startGuestMode(); });
+                    } else { startGuestMode(); }
                 },
             });
-            // ライブラリロード完了後にボタンを有効化
             setWelcomeButtonsEnabled(true);
             document.getElementById('check-msg').innerText = "";
         }
@@ -165,9 +157,7 @@
         }
 
         function startGuestMode() {
-            isGuestMode = true;
-            accessToken = null;
-            userEmail = null;
+            isGuestMode = true; accessToken = null; userEmail = null;
             enterApp();
         }
 
@@ -198,13 +188,20 @@
             const r = config.recipients[currentDrumIdx] || {name: "(未設定)"};
             targetDisp.innerText = `${r.name || "(未設定)"} さんへ`;
             document.getElementById('selector-area').style.display = 'none';
-            document.getElementById('mic-btn').style.display = 'flex';
+            
+            // ★重要：表示バグ防止のため、ここでマイクボタンの状態をリセット
+            const micBtn = document.getElementById('mic-btn');
+            micBtn.innerText = "録音する";
+            micBtn.style.background = "#f44336";
+            micBtn.style.color = "white";
+            micBtn.classList.remove('loading');
+            micBtn.style.display = 'flex';
+            
             msgDisp.innerText = isGuestMode ? "お試しモードです\n(送信には連携が必要)" : "準備完了！\nおはなし してください";
         }
 
         let mediaRecorder, audioChunks = [];
         async function toggleRecording() {
-            // 解析前にトークンの有効性をプッシュ（1時間の壁対策）
             if (!isGuestMode && !accessToken) {
                 tokenClient.requestAccessToken({ prompt: '' });
                 return;
@@ -212,7 +209,6 @@
 
             const micBtn = document.getElementById('mic-btn');
             if (!mediaRecorder || mediaRecorder.state === "inactive") {
-                // ネット接続チェック（AIが使えないため）
                 if (!navigator.onLine) {
                     alert("インターネットに接続されていません。");
                     return;
@@ -221,7 +217,7 @@
                 mediaRecorder = new MediaRecorder(stream); audioChunks = [];
                 mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                 mediaRecorder.onstop = handleRecordingStop; mediaRecorder.start();
-                micBtn.innerText = "おわったら たたく"; micBtn.style.background = "#FFEB3B"; micBtn.style.color = "#333";
+                micBtn.innerText = "おわったら たたたた"; micBtn.style.background = "#FFEB3B"; micBtn.style.color = "#333";
             } else { 
                 mediaRecorder.stop(); 
                 micBtn.innerText = "解析中..."; 
@@ -306,9 +302,25 @@
             if (thinkTimer) { clearInterval(thinkTimer); thinkTimer = null; }
             if (status === 'select') { robotImg.src = 'select.png'; robotImg.style.transform = 'rotate(0deg)'; } 
             else if (status === 'thinking') { thinkTimer = setInterval(() => { thinkFrame = (thinkFrame % 3) + 1; robotImg.src = `thinking${thinkFrame}.png`; robotImg.style.transform = `rotate(${[-5, 0, 5][thinkFrame-1]}deg)`; }, 1000); }
-            else if (status === 'decide') { robotImg.src = 'decide.png'; robotImg.style.transform = 'rotate(0deg)'; }
+            else if (status === 'decide'); { robotImg.src = 'decide.png'; robotImg.style.transform = 'rotate(0deg)'; }
         }
-        function retry() { lastAnalysis = null; targetDisp.innerText = ""; document.getElementById('selector-area').style.display = 'flex'; document.getElementById('mic-btn').style.display = 'none'; document.getElementById('mic-btn').classList.remove('loading'); document.getElementById('confirm-area').style.display = 'none'; updateDrumDisplay(); }
+        
+        function retry() { 
+            lastAnalysis = null; 
+            targetDisp.innerText = ""; 
+            document.getElementById('selector-area').style.display = 'flex'; 
+            
+            // ★重要：ここで録音ボタンの表示を完全にリセット
+            const micBtn = document.getElementById('mic-btn');
+            micBtn.style.display = 'none'; 
+            micBtn.innerText = "録音する";
+            micBtn.style.background = "#f44336";
+            micBtn.style.color = "white";
+            micBtn.classList.remove('loading');
+            
+            document.getElementById('confirm-area').style.display = 'none'; 
+            updateDrumDisplay(); 
+        }
     </script>
 </body>
 </html>
