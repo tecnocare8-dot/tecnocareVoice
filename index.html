@@ -247,11 +247,28 @@
                 });
                 const json = await res.json();
                 if (json.status === "success") {
-                    lastAnalysis = json.analysis; lastAnalysis.row = json.row;
-                    msgDisp.innerText = lastAnalysis.inference; updateRobot('decide');
+                    lastAnalysis = json.analysis; 
+                    lastAnalysis.row = json.row;
+
+                    // --- 【祝】100回ステップのメッセージ判定 ---
+                    let celebMsg = "";
+                    if (!isGuestMode && json.totalCount) {
+                        const count = json.totalCount;
+                        if (count === 100) {
+                            celebMsg = "【祝・100回達成！】\n僕を一人前に育ててくれて、本当にありがとうございます。感謝を込めて、特別なレポートを準備します！\n\n";
+                        } else if ([10, 20, 30, 50, 70].includes(count)) {
+                            celebMsg = `【${count}回目のステップ】\nいつもありがとうございます。あなたの声が、もっと深くわかるようになってきました！\n\n`;
+                        }
+                    }
+
+                    // お祝いメッセージと解析結果をガッチャンコして表示
+                    msgDisp.innerText = celebMsg + lastAnalysis.inference;
+                    updateRobot('decide');
+
                     document.getElementById('mic-btn').style.display = 'none';
                     document.getElementById('confirm-area').style.display = 'flex';
                     document.getElementById('send-btn').style.display = accessToken ? 'flex' : 'none';
+                    
                     if (isGuestMode) msgDisp.innerText += "\n\n(連携すると送信できます)";
                 }
             } catch (e) {
