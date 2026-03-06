@@ -3,57 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>tecnocareVoice v0.86</title>
+    <title>tecnocareVoice v0.90</title>
     <script src="https://accounts.google.com/gsi/client" onload="initTokenClient()" async defer></script>
     <style>
         body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; background: #2196F3; color: white; overflow: hidden; }
         #app-info { position: fixed; top: 10px; right: 10px; color: rgba(255,255,255,0.4); font-size: 12px; cursor: pointer; z-index: 1000; padding: 10px; }
+
+        /* 【新設】ウェルカム画面：ボタンを大きく、わかりやすく */
+        #welcome-screen { position: fixed; top:0; left:0; width:100%; height:100%; background: #2196F3; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; text-align: center; }
+        .welcome-msg { font-size: 1.4rem; font-weight: bold; margin: 25px 0; line-height: 1.6; }
+        .big-btn { width: 100%; max-width: 400px; padding: 25px; font-size: 1.5rem; font-weight: bold; border-radius: 15px; border: none; margin: 12px 0; cursor: pointer; transition: opacity 0.3s; }
+        .big-btn:disabled { background: #9e9e9e !important; cursor: not-allowed; opacity: 0.6; }
+        #btn-auth { background: #4CAF50; color: white; }
+        #btn-guest { background: rgba(255,255,255,0.2); color: white; border: 2px solid white; }
+        #check-msg { margin-top: 15px; color: #FFEB3B; font-weight: bold; min-height: 1.5rem; }
+
+        /* メイン画面：既存デザインを維持 */
+        #main-app { display: none; flex-direction: column; height: 100vh; }
         #upper-area { height: 50vh; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; position: relative; }
         #target-display { font-size: 1.8rem; font-weight: bold; text-align: left; margin-bottom: 10px; min-height: 2.2rem; }
         #message-display { flex: 1; font-size: 2.2rem; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; line-height: 1.4; white-space: pre-wrap; }
         #robot-container { height: 180px; display: flex; justify-content: center; align-items: center; }
         #robot-image { width: 160px; height: auto; transition: transform 0.3s ease-in-out; }
+
         #lower-area { height: 50vh; border-top: 4px solid white; display: flex; flex-direction: column; }
         #selector-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1976D2; }
         #drum-text { font-size: 3rem; font-weight: bold; margin-bottom: 20px; }
         #drum-controls { display: flex; gap: 20px; }
         .drum-btn { padding: 15px 40px; font-size: 1.5rem; font-weight: bold; background: white; color: #1976D2; border-radius: 50px; border: none; cursor: pointer; }
         .decide-btn { background: #FFEB3B; color: #333; }
-        #auth-btn { flex: 1; display: none; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; background: #4CAF50; cursor: pointer; text-align: center; padding: 20px; }
+
         #mic-btn { flex: 1; display: none; align-items: center; justify-content: center; font-size: 3rem; font-weight: bold; background: #f44336; cursor: pointer; }
         #confirm-area { flex: 1; display: none; }
         .split-btn { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; cursor: pointer; }
         #send-btn { background: #4CAF50; border-right: 2px solid white; }
         #retry-btn { background: #757575; }
         .loading { background: #9e9e9e !important; }
+
+        /* 設定モーダル：ログアウトボタンを追加 */
         #settings-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 10000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         .setting-group { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px; }
         input[type="text"], input[type="email"], select { width: 100%; font-size: 1.2rem; margin: 5px 0 10px; padding: 10px; box-sizing: border-box; color: black; }
-        button.save-btn { width: 100%; padding: 20px; font-size: 1.5rem; font-weight: bold; background: #4CAF50; color: white; border: none; border-radius: 10px; margin-bottom: 50px;}
+        button.save-btn { width: 100%; padding: 20px; font-size: 1.5rem; font-weight: bold; background: #4CAF50; color: white; border: none; border-radius: 10px; margin-bottom: 20px;}
+        .logout-btn { width: 100%; padding: 15px; background: #f44336; color: white; border: none; border-radius: 10px; font-weight: bold; margin-bottom: 50px; }
     </style>
 </head>
 <body>
     <div id="app-info" onclick="handleSecretTap()">tecnocareVoice</div>
-    <div id="upper-area">
-        <div id="target-display"></div>
-        <div id="message-display">読み込み中...</div>
-        <div id="robot-container"><img id="robot-image" src="select.png"></div>
+
+    <div id="welcome-screen">
+        <img src="select.png" style="width: 100px; margin-bottom: 10px;">
+        <div style="font-size: 2.2rem; font-weight: bold;">tecnocareVoice</div>
+        <div class="welcome-msg">あなたの声に想いをのせます。<br>僕を育ててください。</div>
+        
+        <button id="btn-auth" class="big-btn" onclick="handleAuthClick()" disabled>Google で連携する<br><span style="font-size: 0.9rem; font-weight: normal;">(メール送信できます)</span></button>
+        <button id="btn-guest" class="big-btn" onclick="startGuestMode()" disabled>登録しない<br><span style="font-size: 0.9rem; font-weight: normal;">(お試し・送信不可)</span></button>
+        
+        <div id="check-msg">連携状態を確認中...</div>
     </div>
-    <div id="lower-area">
-        <div id="selector-area">
-            <div id="drum-text"></div>
-            <div id="drum-controls">
-                <button class="drum-btn" onclick="nextRecipient()">次へ</button>
-                <button class="drum-btn decide-btn" onclick="decideRecipient()">決定</button>
+
+    <div id="main-app">
+        <div id="upper-area">
+            <div id="target-display"></div>
+            <div id="message-display">読み込み中...</div>
+            <div id="robot-container"><img id="robot-image" src="select.png"></div>
+        </div>
+        <div id="lower-area">
+            <div id="selector-area">
+                <div id="drum-text"></div>
+                <div id="drum-controls">
+                    <button class="drum-btn" onclick="nextRecipient()">次へ</button>
+                    <button class="drum-btn decide-btn" onclick="decideRecipient()">決定</button>
+                </div>
+            </div>
+            <div id="mic-btn" onclick="toggleRecording()">録音する</div>
+            <div id="confirm-area">
+                <div id="send-btn" class="split-btn" onclick="sendData()">送信</div>
+                <div id="retry-btn" class="split-btn" onclick="retry()">戻る</div>
             </div>
         </div>
-        <div id="auth-btn" onclick="handleAuthClick()">Googleでログインして<br>メールを送れるようにする</div>
-        <div id="mic-btn" onclick="toggleRecording()">録音する</div>
-        <div id="confirm-area">
-            <div id="send-btn" class="split-btn" onclick="sendData()">送信</div>
-            <div id="retry-btn" class="split-btn" onclick="retry()">戻る</div>
-        </div>
     </div>
+
     <div id="settings-modal">
         <h2 style="color:#FFEB3B">設定</h2>
         <div class="setting-group">
@@ -63,6 +93,8 @@
         </div>
         <div id="recipient-config-list"></div>
         <button class="save-btn" onclick="saveSettings()">設定を保存して閉じる</button>
+        <button class="logout-btn" onclick="handleLogout()">Google連携を解除して最初に戻る</button>
+        <button onclick="document.getElementById('settings-modal').style.display='none'" style="width:100%; background:none; color:white; border:none; padding:10px;">キャンセル</button>
     </div>
 
     <script>
@@ -70,7 +102,10 @@
         const CLIENT_ID = "826879058763-2pqgu8df0fogl7fd6l5vuqvbjk7anfhg.apps.googleusercontent.com";
         
         let config = { fromName:"", outputMode:"標準", recipients:Array(5).fill(null).map(() => ({name:"", email:"", context:"家族向け"})) };
-        let currentDrumIdx = 0; let lastAnalysis = null; let thinkTimer = null; let thinkFrame = 1; let tapCount = 0; let tokenClient; let accessToken = null; let userEmail = null;
+        let currentDrumIdx = 0; let lastAnalysis = null; let thinkTimer = null; let thinkFrame = 1; let tapCount = 0;
+        let tokenClient; let accessToken = null; let userEmail = null;
+        let isGuestMode = false;
+        let authTimeout = null;
 
         const robotImg = document.getElementById('robot-image');
         const targetDisp = document.getElementById('target-display');
@@ -79,31 +114,169 @@
         window.onload = () => {
             const saved = localStorage.getItem('awesome_voice_config');
             if (saved) config = JSON.parse(saved);
-            // ログイン情報の復元
-            accessToken = localStorage.getItem('awesome_access_token');
-            userEmail = localStorage.getItem('awesome_user_email');
-            renderRecipientConfig(); updateDrumDisplay();
+            renderRecipientConfig();
+            
+            // 起動時のサイレント再連携試行
+            authTimeout = setTimeout(() => {
+                if (!accessToken) {
+                    setWelcomeButtonsEnabled(true);
+                    document.getElementById('check-msg').innerText = "連携をタップしてください";
+                }
+            }, 8000); // 8秒応答がなければお試し誘導への準備
         };
 
         function initTokenClient() {
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID, scope: 'https://www.googleapis.com/auth/gmail.send email',
                 callback: (response) => {
+                    if (authTimeout) clearTimeout(authTimeout);
                     if (response.access_token) {
+                        // アカウント切り替えに対応するため、一度フラッシュしてからセット
+                        accessToken = null; userEmail = null;
                         accessToken = response.access_token;
-                        localStorage.setItem('awesome_access_token', accessToken);
+                        
                         fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } })
                         .then(res => res.json()).then(data => {
                             userEmail = data.email;
-                            localStorage.setItem('awesome_user_email', userEmail);
-                            showMicArea();
+                            isGuestMode = false;
+                            enterApp();
+                        }).catch(() => {
+                            startGuestMode(); // 通信エラー時はお試しへ
                         });
+                    } else {
+                        startGuestMode(); // キャンセル時などもお試しへ
                     }
                 },
             });
+            // ライブラリロード完了後にボタンを有効化
+            setWelcomeButtonsEnabled(true);
+            document.getElementById('check-msg').innerText = "";
         }
-        function handleAuthClick() { tokenClient.requestAccessToken(); }
-        function showMicArea() { document.getElementById('auth-btn').style.display = 'none'; document.getElementById('mic-btn').style.display = 'flex'; msgDisp.innerText = "準備完了！\nおはなし してください"; }
+
+        function setWelcomeButtonsEnabled(enabled) {
+            document.getElementById('btn-auth').disabled = !enabled;
+            document.getElementById('btn-guest').disabled = !enabled;
+        }
+
+        function handleAuthClick() {
+            setWelcomeButtonsEnabled(false);
+            document.getElementById('check-msg').innerText = "連携中...";
+            tokenClient.requestAccessToken(); 
+        }
+
+        function startGuestMode() {
+            isGuestMode = true;
+            accessToken = null;
+            userEmail = null;
+            enterApp();
+        }
+
+        function enterApp() {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            updateDrumDisplay();
+        }
+
+        function handleLogout() {
+            if(confirm("連携を解除しますか？")){
+                localStorage.removeItem('awesome_access_token');
+                localStorage.removeItem('awesome_user_email');
+                location.reload();
+            }
+        }
+
+        function updateDrumDisplay() {
+            const r = config.recipients[currentDrumIdx] || {name:"(未登録)"};
+            document.getElementById('drum-text').innerText = `${currentDrumIdx + 1}: ${r.name || "(未登録)"}`;
+            msgDisp.innerText = isGuestMode ? "【お試しモード】\nだれに おくりますか？" : "だれに おくりますか？";
+            updateRobot('select');
+        }
+
+        function nextRecipient() { currentDrumIdx = (currentDrumIdx + 1) % 5; updateDrumDisplay(); }
+
+        function decideRecipient() {
+            const r = config.recipients[currentDrumIdx] || {name: "(未設定)"};
+            targetDisp.innerText = `${r.name || "(未設定)"} さんへ`;
+            document.getElementById('selector-area').style.display = 'none';
+            document.getElementById('mic-btn').style.display = 'flex';
+            msgDisp.innerText = isGuestMode ? "お試しモードです\n(送信には連携が必要)" : "準備完了！\nおはなし してください";
+        }
+
+        let mediaRecorder, audioChunks = [];
+        async function toggleRecording() {
+            // 解析前にトークンの有効性をプッシュ（1時間の壁対策）
+            if (!isGuestMode && !accessToken) {
+                tokenClient.requestAccessToken({ prompt: '' });
+                return;
+            }
+
+            const micBtn = document.getElementById('mic-btn');
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                // ネット接続チェック（AIが使えないため）
+                if (!navigator.onLine) {
+                    alert("インターネットに接続されていません。");
+                    return;
+                }
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream); audioChunks = [];
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = handleRecordingStop; mediaRecorder.start();
+                micBtn.innerText = "おわったら たたく"; micBtn.style.background = "#FFEB3B"; micBtn.style.color = "#333";
+            } else { 
+                mediaRecorder.stop(); 
+                micBtn.innerText = "解析中..."; 
+                micBtn.classList.add('loading');
+                updateRobot('thinking'); 
+            }
+        }
+
+        async function handleRecordingStop() {
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            const base64 = await new Promise(r => { const reader = new FileReader(); reader.onloadend = () => r(reader.result.split(',')[1]); reader.readAsDataURL(blob); });
+            const activeR = config.recipients[currentDrumIdx];
+            
+            try {
+                const res = await fetch(GAS_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ 
+                        version: "salvage", action: "analyze", audio: base64, 
+                        email: userEmail, toWho: activeR.name, context: activeR.context, outputMode: config.outputMode 
+                    }) 
+                });
+                const json = await res.json();
+                if (json.status === "success") {
+                    lastAnalysis = json.analysis; lastAnalysis.row = json.row;
+                    msgDisp.innerText = lastAnalysis.inference; updateRobot('decide');
+                    document.getElementById('mic-btn').style.display = 'none';
+                    document.getElementById('confirm-area').style.display = 'flex';
+                    document.getElementById('send-btn').style.display = accessToken ? 'flex' : 'none';
+                    if (isGuestMode) msgDisp.innerText += "\n\n(連携すると送信できます)";
+                }
+            } catch (e) {
+                alert("解析に失敗しました。電波の良い場所でやり直してください。");
+                retry();
+            }
+        }
+
+        async function sendData() {
+            if (!accessToken && !isGuestMode) {
+                tokenClient.requestAccessToken({ prompt: '' });
+                return;
+            }
+            const activeR = config.recipients[currentDrumIdx];
+            msgDisp.innerText = "おくっています...";
+            document.getElementById('confirm-area').style.display = 'none';
+
+            await fetch(GAS_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    version: "salvage", action: "send", analysis: lastAnalysis, row: lastAnalysis.row, 
+                    accessToken: accessToken, settings: { fromName:config.fromName, toName:activeR.name, toEmail:activeR.email } 
+                }) 
+            });
+            alert("おくりました！"); retry();
+        }
+
         function handleSecretTap() { tapCount++; if (tapCount >= 5) { tapCount = 0; openSettings(); } setTimeout(() => { tapCount = 0; }, 3000); }
         function openSettings() {
             document.getElementById('from-name').value = config.fromName || "";
@@ -131,54 +304,11 @@
         }
         function updateRobot(status) {
             if (thinkTimer) { clearInterval(thinkTimer); thinkTimer = null; }
-            if (status === 'select') { robotImg.src = 'select.png'; } 
-            else if (status === 'thinking') { thinkTimer = setInterval(() => { thinkFrame = (thinkFrame % 3) + 1; robotImg.src = `thinking${thinkFrame}.png`; }, 1000); }
-            else if (status === 'decide') { robotImg.src = 'decide.png'; }
+            if (status === 'select') { robotImg.src = 'select.png'; robotImg.style.transform = 'rotate(0deg)'; } 
+            else if (status === 'thinking') { thinkTimer = setInterval(() => { thinkFrame = (thinkFrame % 3) + 1; robotImg.src = `thinking${thinkFrame}.png`; robotImg.style.transform = `rotate(${[-5, 0, 5][thinkFrame-1]}deg)`; }, 1000); }
+            else if (status === 'decide') { robotImg.src = 'decide.png'; robotImg.style.transform = 'rotate(0deg)'; }
         }
-        function updateDrumDisplay() { const r = config.recipients[currentDrumIdx] || {name:"(未登録)"}; document.getElementById('drum-text').innerText = `${currentDrumIdx + 1}: ${r.name || "(未登録)"}`; msgDisp.innerText = "だれに おくりますか？"; updateRobot('select'); }
-        function nextRecipient() { currentDrumIdx = (currentDrumIdx + 1) % 5; updateDrumDisplay(); }
-        function decideRecipient() {
-            const r = config.recipients[currentDrumIdx] || {name: "(未設定)"};
-            targetDisp.innerText = `${r.name || "(未設定)"} さんへ`;
-            document.getElementById('selector-area').style.display = 'none';
-            showMicArea();
-            if (!accessToken) { msgDisp.innerText = "お試しモードです\n(送信にはログインが必要)"; }
-            else { msgDisp.innerText = "準備完了！\nおはなし してください"; }
-        }
-
-        let mediaRecorder, audioChunks = [];
-        async function toggleRecording() {
-            const micBtn = document.getElementById('mic-btn');
-            if (!mediaRecorder || mediaRecorder.state === "inactive") {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream); audioChunks = [];
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                mediaRecorder.onstop = handleRecordingStop; mediaRecorder.start();
-                micBtn.innerText = "おわったら たたく"; micBtn.style.background = "#FFEB3B"; micBtn.style.color = "#333";
-            } else { mediaRecorder.stop(); micBtn.innerText = "解析中..."; updateRobot('thinking'); }
-        }
-        async function handleRecordingStop() {
-            const blob = new Blob(audioChunks, { type: 'audio/webm' });
-            const base64 = await new Promise(r => { const reader = new FileReader(); reader.onloadend = () => r(reader.result.split(',')[1]); reader.readAsDataURL(blob); });
-            const activeR = config.recipients[currentDrumIdx];
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ version: "salvage", action: "analyze", audio: base64, email: userEmail, toWho: activeR.name, context: activeR.context, outputMode: config.outputMode }) });
-            const json = await res.json();
-            if (json.status === "success") {
-                lastAnalysis = json.analysis; lastAnalysis.row = json.row;
-                msgDisp.innerText = lastAnalysis.inference; updateRobot('decide');
-                document.getElementById('mic-btn').style.display = 'none';
-                document.getElementById('confirm-area').style.display = 'flex';
-                document.getElementById('send-btn').style.display = accessToken ? 'flex' : 'none';
-                if (!accessToken) msgDisp.innerText += "\n\n(ログインすると送信できます)";
-            }
-        }
-        async function sendData() {
-            const activeR = config.recipients[currentDrumIdx];
-            document.getElementById('confirm-area').style.display = 'none';
-            await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ version: "salvage", action: "send", analysis: lastAnalysis, row: lastAnalysis.row, accessToken: accessToken, settings: { fromName:config.fromName, toName:activeR.name, toEmail:activeR.email } }) });
-            alert("おくりました！"); retry();
-        }
-        function retry() { lastAnalysis = null; targetDisp.innerText = ""; document.getElementById('selector-area').style.display = 'flex'; document.getElementById('mic-btn').style.display = 'none'; document.getElementById('confirm-area').style.display = 'none'; updateDrumDisplay(); }
+        function retry() { lastAnalysis = null; targetDisp.innerText = ""; document.getElementById('selector-area').style.display = 'flex'; document.getElementById('mic-btn').style.display = 'none'; document.getElementById('mic-btn').classList.remove('loading'); document.getElementById('confirm-area').style.display = 'none'; updateDrumDisplay(); }
     </script>
 </body>
 </html>
