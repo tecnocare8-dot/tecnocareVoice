@@ -219,11 +219,10 @@
             const r = config.recipients[currentDrumIdx] || {name: "(未設定)"};
             targetDisp.innerText = `${r.name || "(未設定)"} さんへ`;
             document.getElementById('selector-area').style.display = 'none';
-            if (!accessToken) {
-                document.getElementById('auth-btn').style.display = 'flex';
-                msgDisp.innerText = "メールをおくるために\nログインしてください";
-            } else {
-                showMicArea();
+            // ★ログインしていなくても録音・解析には進めるように調整
+            showMicArea();
+            if (!userEmail) {
+                msgDisp.innerText = "お試しモードです\n(送信にはログインが必要)";
             }
         }
 
@@ -251,11 +250,12 @@
             const base64 = await new Promise(r => { const reader = new FileReader(); reader.onloadend = () => r(reader.result.split(',')[1]); reader.readAsDataURL(blob); });
             const activeR = config.recipients[currentDrumIdx];
             
+            // ★重要：解析フェーズで userEmail を確実にGASへ飛ばす
             const res = await fetch(GAS_URL, { 
                 method: 'POST', 
                 body: JSON.stringify({ 
                     version: "salvage", action: "analyze", audio: base64, 
-                    email: userEmail, // ★ここ！取得したメールアドレスを送信
+                    email: userEmail, 
                     toWho: activeR.name, context: activeR.context, outputMode: config.outputMode 
                 }) 
             });
@@ -266,6 +266,14 @@
                 updateRobot('decide');
                 document.getElementById('mic-btn').style.display = 'none';
                 document.getElementById('confirm-area').style.display = 'flex';
+                
+                // ★棲み分け：ログイン済みなら「送信」表示。未ログインなら「送信」を隠しログインを促す
+                if (userEmail) {
+                    document.getElementById('send-btn').style.display = 'flex';
+                } else {
+                    document.getElementById('send-btn').style.display = 'none';
+                    msgDisp.innerText += "\n\n(ログインすると送信できます)";
+                }
             }
         }
 
