@@ -12,20 +12,26 @@
         .catchphrase { font-size: 1.2rem; color: #3498db; font-weight: bold; margin-top: 15px; }
         
         .container { max-width: 500px; margin: 0 auto; padding: 20px; }
-        .section { margin-bottom: 30px; }
-        h2 { font-size: 1.1rem; color: #2c3e50; border-bottom: 2px solid #3498db; display: inline-block; padding-bottom: 5px; }
+        .section { margin-bottom: 40px; }
+        h2 { font-size: 1.2rem; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-bottom: 15px; }
         p { font-size: 0.95rem; margin: 10px 0; }
+
+        /* 機能説明のボックス */
+        .feature-box { background: #fff; border: 1px solid #eef2f5; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .feature-title { font-weight: bold; color: #3498db; display: block; margin-bottom: 5px; }
 
         /* モニター特典のリスト */
         .benefit-list { background: #f0f7ff; padding: 20px; border-radius: 15px; border: 1px dashed #3498db; }
         .benefit-item { display: flex; align-items: center; margin-bottom: 10px; font-weight: bold; }
         .benefit-item span { font-size: 1.5rem; margin-right: 10px; }
 
-        /* ボタンデザイン */
+        /* ステップ案内 */
+        .step-box { background: #fffbe6; padding: 15px; border-radius: 10px; border: 1px solid #ffe58f; margin-top: 10px; }
+        .step-num { display: inline-block; width: 20px; height: 20px; background: #faad14; color: #fff; border-radius: 50%; text-align: center; line-height: 20px; font-size: 0.8rem; margin-right: 5px; }
+
         .btn-form { display: block; background: #e74c3c; color: white; text-align: center; padding: 18px; border-radius: 50px; 
                     text-decoration: none; font-size: 1.2rem; font-weight: bold; margin: 30px 0; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
-        .btn-form:active { transform: scale(0.98); }
-
+        
         footer { text-align: center; padding: 30px; color: #999; font-size: 0.8rem; }
     </style>
 </head>
@@ -35,8 +41,8 @@
     <img src="select.png" alt="Robot" class="hero-img">
     <h1>tecnocareVoice</h1>
     <div class="catchphrase">
-        あなたをサポートするAI<br>
-        あなたの言葉と思いを察します
+        あなたをサポートするAI執事<br>
+        声にならない「想い」をサルベージします
     </div>
 </header>
 
@@ -45,27 +51,50 @@
     <div class="section">
         <h2>私を一緒に育ててください</h2>
         <p>最新のAI執事は、まだ生まれたばかりです。<br>
-           指の震え、言葉の詰まり、うまく伝えられないもどかしさ……。<br>
-           あなたが話してくれるほど、AIはあなたの「声」を理解し、賢く、優しく成長していきます。</p>
+           言葉が不明瞭になったり、うまく伝えられないもどかしさを抱えるあなたの「声」を、AIが一生懸命に聞き取ります。</p>
+        <p>あなたが話してくれるほど、AIはあなたの独特な響きを理解し、より正確に想いを代弁できるよう成長していきます。</p>
     </div>
 
     <div class="section">
-        <div class="benefit-list">
-            <div class="benefit-item"><span>🎁</span> 最新AIがずっと無料</div>
-            <div class="benefit-item"><span>🩺</span> 声のバイタルデータを解析</div>
-            <div class="benefit-item"><span>🚀</span> あなたの協力が未来の誰かを救う</div>
+        <h2>tecnocareVoice の主な機能</h2>
+        
+        <div class="feature-box">
+            <span class="feature-title">💎 音声サルベージ（代弁）機能</span>
+            不明瞭な発話でも、前後の文脈から「本当に伝えたかった言葉」を推測し、家族や友人へメールで届けます。
+        </div>
+
+        <div class="feature-box">
+            <span class="feature-title">📊 声のバイタル解析</span>
+            声の「安定性」「制御力」「熱量」などを独自のAI指標で数値化。日々の声の変化をデータとして記録します。
+        </div>
+
+        <div class="feature-box">
+            <span class="feature-title">🤖 感情・属性推測</span>
+            声の響きから、その時の感情やコンディションをAIが察し、寄り添うようなレポートを作成します。
         </div>
     </div>
 
     <div class="section">
-        <h2>共同開発パートナー募集中</h2>
-        <p>100回の「おはなし」を通じて、AI執事を一人前に育ててくれる方を募集しています。あなたの声の記録が、次世代の医療・介護インフラの礎になります。</p>
+        <div class="benefit-list">
+            <div class="benefit-item"><span>🎁</span> 最新AI機能がずっと無料</div>
+            <div class="benefit-item"><span>📈</span> 自分の声の変化を可視化</div>
+            <div class="benefit-item"><span>🚀</span> あなたの協力が、同じ悩みを持つ誰かの未来を救います</div>
+        </div>
     </div>
 
-    <a href="https://forms.gle/YOUR_FORM_ID" class="btn-form">モニターに応募する</a>
+    <div class="section">
+        <h2>ご利用の流れ</h2>
+        <div class="step-box">
+            <p><span class="step-num">1</span> <b>モニターに応募</b><br>下のボタンからフォームに登録してください。</p>
+            <p><span class="step-num">2</span> <b>ホーム画面に追加</b><br>アプリが開いたら、ブラウザのメニューから「ホーム画面に追加」を行うと、次からアイコンで起動できます。</p>
+            <p><span class="step-num">3</span> <b>Google連携</b><br>Googleアカウントで連携すると、AIが作成した文章をそのままメール送信できます。</p>
+        </div>
+    </div>
+
+    <a href="https://forms.gle/YOUR_FORM_ID" class="btn-form">モニターに応募して利用を始める</a>
 
     <div class="section" style="font-size: 0.85rem; color: #7f8c8d; text-align: center;">
-        <p>※登録完了後、アプリのURLが表示されます。</p>
+        <p>100回の「おはなし」を目標に、<br>AI執事を一人前に育ててみませんか？</p>
     </div>
 
     <footer>
