@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>tecnocareVoice v0.91</title>
+    <title>tecnocareVoice v0.92</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <script>
@@ -261,15 +261,23 @@
                         }
                     }
 
-                    // お祝いメッセージと解析結果をガッチャンコして表示
+                    // お祝いメッセージと解析結果を表示
                     msgDisp.innerText = celebMsg + lastAnalysis.inference;
                     updateRobot('decide');
 
                     document.getElementById('mic-btn').style.display = 'none';
                     document.getElementById('confirm-area').style.display = 'flex';
-                    document.getElementById('send-btn').style.display = accessToken ? 'flex' : 'none';
                     
-                    if (isGuestMode) msgDisp.innerText += "\n\n(連携すると送信できます)";
+                    // --- 【修正：エラー対策】宛先のメールアドレス設定をチェック ---
+                    // accessTokenがあり、かつ宛先メールアドレスが正しく設定されている時だけ送信ボタンを出す
+                    const hasValidEmail = activeR && activeR.email && activeR.email.trim() !== "";
+                    document.getElementById('send-btn').style.display = (accessToken && hasValidEmail) ? 'flex' : 'none';
+                    
+                    if (isGuestMode) {
+                        msgDisp.innerText += "\n\n(連携すると送信できます)";
+                    } else if (!hasValidEmail) {
+                        msgDisp.innerText += "\n\n(宛先メールアドレスが未設定です。設定画面で登録してください)";
+                    }
                 }
             } catch (e) {
                 alert("解析に失敗しました。電波の良い場所でやり直してください。");
@@ -278,11 +286,19 @@
         }
 
         async function sendData() {
+            const activeR = config.recipients[currentDrumIdx];
+            //念の為ここでもチェック（ボタンが出ていれば通るはずだがガード）
+            if (!activeR.email || activeR.email.trim() === "") {
+                alert("宛先メールアドレスが設定されていません。設定画面で確認してください。");
+                retry();
+                return;
+            }
+
             if (!accessToken && !isGuestMode) {
                 tokenClient.requestAccessToken({ prompt: '' });
                 return;
             }
-            const activeR = config.recipients[currentDrumIdx];
+            
             msgDisp.innerText = "おくっています...";
             document.getElementById('confirm-area').style.display = 'none';
 
