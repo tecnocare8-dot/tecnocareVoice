@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tecnocareVoice - モニター募集</title>
+    <title>tecnocareVoice - モニターガイド</title>
     <style>
         body { margin: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background: #fdfdfd; color: #444; line-height: 1.6; }
         header { background: #ffffff; padding: 40px 20px; text-align: center; border-bottom: 2px solid #eef2f5; }
@@ -15,22 +15,24 @@
         .section { margin-bottom: 40px; }
         h2 { font-size: 1.2rem; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-bottom: 15px; }
         p { font-size: 0.95rem; margin: 10px 0; }
+        
+        /* 画像ガイドのスタイル */
+        .guide-img { width: 100%; border-radius: 10px; border: 1px solid #ddd; margin: 10px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .alert-box { background: #fff0f0; border: 1px solid #ffa39e; padding: 15px; border-radius: 10px; margin: 15px 0; }
+        .alert-title { color: #cf1322; font-weight: bold; display: block; margin-bottom: 5px; }
 
-        /* 機能説明のボックス */
         .feature-box { background: #fff; border: 1px solid #eef2f5; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .feature-title { font-weight: bold; color: #3498db; display: block; margin-bottom: 5px; }
 
-        /* モニター特典のリスト */
         .benefit-list { background: #f0f7ff; padding: 20px; border-radius: 15px; border: 1px dashed #3498db; }
         .benefit-item { display: flex; align-items: center; margin-bottom: 10px; font-weight: bold; }
         .benefit-item span { font-size: 1.5rem; margin-right: 10px; }
 
-        /* ステップ案内 */
         .step-box { background: #fffbe6; padding: 15px; border-radius: 10px; border: 1px solid #ffe58f; margin-top: 10px; }
         .step-num { display: inline-block; width: 20px; height: 20px; background: #faad14; color: #fff; border-radius: 50%; text-align: center; line-height: 20px; font-size: 0.8rem; margin-right: 5px; }
 
-        .btn-form { display: block; background: #e74c3c; color: white; text-align: center; padding: 18px; border-radius: 50px; 
-                    text-decoration: none; font-size: 1.2rem; font-weight: bold; margin: 30px 0; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
+        .btn-form { display: block; background: #4CAF50; color: white; text-align: center; padding: 18px; border-radius: 50px; 
+                    text-decoration: none; font-size: 1.2rem; font-weight: bold; margin: 30px 0; box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3); }
         
         footer { text-align: center; padding: 30px; color: #999; font-size: 0.8rem; }
     </style>
@@ -38,7 +40,7 @@
 <body>
 
 <header>
-    <img src="select.png" alt="Robot" class="hero-img">
+    <img src="1st.jpeg" alt="Robot" class="hero-img">
     <h1>tecnocareVoice</h1>
     <div class="catchphrase">
         あなたをサポートするAI執事<br>
@@ -50,52 +52,54 @@
 
     <div class="section">
         <h2>私を一緒に育ててください</h2>
-        <p>最新のAI執事は、まだ生まれたばかりです。<br>
-           言葉が不明瞭になったり、うまく伝えられないもどかしさを抱えるあなたの「声」を、AIが一生懸命に聞き取ります。</p>
+        <p>言葉が不明瞭になったり、うまく伝えられないもどかしさを抱えるあなたの「声」を、AIが一生懸命に聞き取ります。</p>
         <p>あなたが話してくれるほど、AIはあなたの独特な響きを理解し、より正確に想いを代弁できるよう成長していきます。</p>
     </div>
 
     <div class="section">
-        <h2>tecnocareVoice の主な機能</h2>
+        <h2>ステップ1：Google連携と警告の解除</h2>
+        <p>メール送信機能を使うには、Googleアカウントでの連携が必要です。</p>
+        <img src="2nd.jpeg" class="guide-img" alt="ログイン画面">
         
-        <div class="feature-box">
-            <span class="feature-title">💎 音声サルベージ（代弁）機能</span>
-            不明瞭な発話でも、前後の文脈から「本当に伝えたかった言葉」を推測し、家族や友人へメールで届けます。
-        </div>
-
-        <div class="feature-box">
-            <span class="feature-title">📊 声のバイタル解析</span>
-            声の「安定性」「制御力」「熱量」などを独自のAI指標で数値化。日々の声の変化をデータとして記録します。
-        </div>
-
-        <div class="feature-box">
-            <span class="feature-title">🤖 感情・属性推測</span>
-            声の響きから、その時の感情やコンディションをAIが察し、寄り添うようなレポートを作成します。
+        <div class="alert-box">
+            <span class="alert-title">⚠️ 赤い警告画面が出た場合</span>
+            <p>このアプリは開発中のため、Googleより警告が表示されますが、故障ではありません。以下の手順で進んでください。</p>
+            <img src="1000018852.jpg" class="guide-img" alt="警告詳細">
+            <p>1. 左下の<b>「詳細」</b>をタップします。</p>
+            <img src="1000018853.jpg" class="guide-img" alt="安全な移動">
+            <p>2. 一番下の<b>「tecnocare8-dot.github.io に移動」</b>をタップしてください。</p>
         </div>
     </div>
 
     <div class="section">
-        <div class="benefit-list">
-            <div class="benefit-item"><span>🎁</span> 最新AI機能がずっと無料</div>
-            <div class="benefit-item"><span>📈</span> 自分の声の変化を可視化</div>
-            <div class="benefit-item"><span>🚀</span> あなたの協力が、同じ悩みを持つ誰かの未来を救います</div>
-        </div>
-    </div>
-
-    <div class="section">
-        <h2>ご利用の流れ</h2>
+        <h2>ステップ2：自分と宛先の設定</h2>
+        <p>右上の「tecnocareVoice」ロゴを5回タップして、設定画面を開きます。</p>
+        <img src="setting.jpeg" class="guide-img" alt="設定画面">
+        <p>ご自身の名前と、送り先（最大5名）の<b>「名前」と「メールアドレス」</b>を登録してください。</p>
         <div class="step-box">
-            <p><span class="step-num">1</span> <b>モニターに応募</b><br>下のボタンからフォームに登録してください。</p>
-            <p><span class="step-num">2</span> <b>ホーム画面に追加</b><br>アプリが開いたら、ブラウザのメニューから「ホーム画面に追加」を行うと、次からアイコンで起動できます。</p>
-            <p><span class="step-num">3</span> <b>Google連携</b><br>Googleアカウントで連携すると、AIが作成した文章をそのままメール送信できます。</p>
+            <p><b>💡 重要ルール</b><br>メールアドレスが空欄の宛先には、送信ボタンが表示されません。必ずセットで登録しましょう。</p>
         </div>
     </div>
 
-    <a href="https://forms.gle/YOUR_FORM_ID" class="btn-form">モニターに応募して利用を始める</a>
-
-    <div class="section" style="font-size: 0.85rem; color: #7f8c8d; text-align: center;">
-        <p>100回の「おはなし」を目標に、<br>AI執事を一人前に育ててみませんか？</p>
+    <div class="section">
+        <h2>ステップ3：想いを届ける</h2>
+        <p>準備ができたら、実際にお話ししてみましょう。</p>
+        <img src="3rd.jpeg" class="guide-img" alt="宛先選択">
+        <p>1. ドラムロールでお相手を選んで「決定」します。</p>
+        <img src="4th.jpeg" class="guide-img" alt="録音開始">
+        <p>2. 赤いボタンを押してお話しします。終わったら画面を「たたた」と叩いてください。</p>
+        <img src="7th.jpeg" class="guide-img" alt="結果確認">
+        <p>3. AIが汲み取った文章を確認し、緑の「送信」ボタンでメールを届けます！</p>
     </div>
+
+    <div class="section">
+        <h2>お楽しみ：100回への道のり</h2>
+        <p>話した回数が10、30、50...と増えるたびに、AI執事から<b>特別なお祝い</b>が飛び出します！</p>
+        <img src="100.png" class="guide-img" alt="100回お祝い">
+        <p>100回達成を目指して、私を一人前に育ててみませんか？感謝を込めた「特別レポート」を準備してお待ちしています。</p>
+    </div>
+
+    <a href="index.html" class="btn-form">利用を開始する</a>
 
     <footer>
         &copy; 2026 tecnocareVoice Project<br>
