@@ -249,7 +249,7 @@
                 mediaRecorder = new MediaRecorder(stream); audioChunks = [];
                 mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                 mediaRecorder.onstop = handleRecordingStop; mediaRecorder.start();
-                micBtn.innerText = "おわったら たたたた"; micBtn.style.background = "#FFEB3B"; micBtn.style.color = "#333";
+                micBtn.innerText = "おわったら たたいて"; micBtn.style.background = "#FFEB3B"; micBtn.style.color = "#333";
             } else { 
                 mediaRecorder.stop(); 
                 micBtn.innerText = "解析中..."; 
