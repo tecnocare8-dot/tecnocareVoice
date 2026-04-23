@@ -157,27 +157,28 @@
             }, 8000);
         };
 
-        function initTokenClient() {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID, scope: 'https://www.googleapis.com/auth/gmail.send email',
-                callback: (response) => {
-                    if (authTimeout) clearTimeout(authTimeout);
-                    if (response.access_token) {
-                        accessToken = null; userEmail = null;
-                        accessToken = response.access_token;
-                        fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } })
-                        .then(res => res.json()).then(data => {
-                            userEmail = data.email;
-                            isGuestMode = false;
-                            enterApp();
-                        }).catch(() => { startGuestMode(); });
-                    } else { startGuestMode(); }
-                },
-            });
-            setWelcomeButtonsEnabled(true);
-            document.getElementById('check-msg').innerText = "";
-        }
-
+// 修正案：エラー内容を表示できるようにする
+function initTokenClient() {
+    try {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: 'https://www.googleapis.com/auth/gmail.send email',
+            callback: (response) => {
+                if (response.error) {
+                    // エラーを画面に表示
+                    document.getElementById('check-msg').innerText = "エラー: " + response.error;
+                    setWelcomeButtonsEnabled(true);
+                    return;
+                }
+                // ...成功時の処理...
+            },
+        });
+        setWelcomeButtonsEnabled(true);
+        document.getElementById('check-msg').innerText = "準備OK！"; // OKなら表示を変える
+    } catch (e) {
+        document.getElementById('check-msg').innerText = "初期化エラーが発生しました";
+    }
+}
         function setWelcomeButtonsEnabled(enabled) {
             document.getElementById('btn-auth').disabled = !enabled;
             document.getElementById('btn-guest').disabled = !enabled;
