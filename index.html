@@ -157,28 +157,43 @@
             }, 8000);
         };
 
-// 修正案：エラー内容を表示できるようにする
-function initTokenClient() {
-    try {
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: 'https://www.googleapis.com/auth/gmail.send email',
-            callback: (response) => {
-                if (response.error) {
-                    // エラーを画面に表示
-                    document.getElementById('check-msg').innerText = "エラー: " + response.error;
-                    setWelcomeButtonsEnabled(true);
-                    return;
-                }
-                // ...成功時の処理...
-            },
-        });
-        setWelcomeButtonsEnabled(true);
-        document.getElementById('check-msg').innerText = "準備OK！"; // OKなら表示を変える
-    } catch (e) {
-        document.getElementById('check-msg').innerText = "初期化エラーが発生しました";
-    }
-}
+        function initTokenClient() {
+            try {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/gmail.send email openid',
+                    callback: (response) => {
+                        if (response.error) {
+                            document.getElementById('check-msg').innerText = "エラー: " + response.error;
+                            setWelcomeButtonsEnabled(true);
+                            return;
+                        }
+                        // 連携成功時の処理を追加
+                        accessToken = response.access_token;
+                        document.getElementById('check-msg').innerText = "認証成功。情報を取得中...";
+                        
+                        // ユーザーのメールアドレスを取得してアプリに入る
+                        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                            headers: { Authorization: `Bearer ${accessToken}` }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            userEmail = data.email;
+                            enterApp();
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            enterApp(); // 失敗してもアプリには入れるようにする
+                        });
+                    },
+                });
+                setWelcomeButtonsEnabled(true);
+                document.getElementById('check-msg').innerText = "準備OK！";
+            } catch (e) {
+                document.getElementById('check-msg').innerText = "初期化エラーが発生しました";
+            }
+        }
+
         function setWelcomeButtonsEnabled(enabled) {
             document.getElementById('btn-auth').disabled = !enabled;
             document.getElementById('btn-guest').disabled = !enabled;
@@ -330,14 +345,19 @@ function initTokenClient() {
             msgDisp.innerText = "おくっています...";
             document.getElementById('confirm-area').style.display = 'none';
 
-            await fetch(GAS_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ 
-                    version: "salvage", action: "send", analysis: lastAnalysis, row: lastAnalysis.row, 
-                    accessToken: accessToken, settings: { fromName:config.fromName, toName:activeR.name, toEmail:activeR.email } 
-                }) 
-            });
-            alert("おくりました！"); retry();
+            try {
+                await fetch(GAS_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ 
+                        version: "salvage", action: "send", analysis: lastAnalysis, row: lastAnalysis.row, 
+                        accessToken: accessToken, settings: { fromName:config.fromName, toName:activeR.name, toEmail:activeR.email } 
+                    }) 
+                });
+                alert("おくりました！");
+            } catch(e) {
+                alert("送信に失敗しました。");
+            }
+            retry();
         }
 
         function handleSecretTap() { tapCount++; if (tapCount >= 5) { tapCount = 0; openSettings(); } setTimeout(() => { tapCount = 0; }, 3000); }
